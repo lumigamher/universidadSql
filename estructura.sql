@@ -22,13 +22,24 @@ CREATE TABLE persona (
     apellido1 VARCHAR(50),
     apellido2 VARCHAR(50),
     fecha_nacimiento DATE,
-    sexo ENUM('H', 'M'),
-    id_direccion INT(10),
+    sexo ENUM('H', 'M')
+);
+
+CREATE TABLE persona_telefono (
+    id_persona INT(10),
     id_telefono INT(10),
-    FOREIGN KEY (id_direccion) REFERENCES direccion(id),
+    PRIMARY KEY (id_persona, id_telefono),
+    FOREIGN KEY (id_persona) REFERENCES persona(id),
     FOREIGN KEY (id_telefono) REFERENCES telefono(id)
 );
 
+CREATE TABLE persona_direccion (
+    id_persona INT(10),
+    id_direccion INT(10),
+    PRIMARY KEY (id_persona, id_direccion),
+    FOREIGN KEY (id_persona) REFERENCES persona(id),
+    FOREIGN KEY (id_direccion) REFERENCES direccion(id)
+);
 CREATE TABLE profesor (
     id INT(10) PRIMARY KEY AUTO_INCREMENT,
     id_persona INT(10),
@@ -52,7 +63,7 @@ CREATE TABLE asignatura (
     id INT(10) PRIMARY KEY AUTO_INCREMENT,
     nombre VARCHAR(100),
     creditos FLOAT,
-    tipo ENUM('...'),
+    tipo VARCHAR(100),
     curso TINYINT(3),
     cuatrimestre TINYINT(9)
 );
