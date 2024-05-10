@@ -1,6 +1,6 @@
 # Universidad
 
-![db][universidad.png]
+![db](universidad.png)
 
 ###     Consultas sobre una tabla
 
@@ -806,3 +806,267 @@
    ```
 
    
+
+## Vistas
+
+1. Vista de Estudiantes Activos:
+
+```sql
+CREATE VIEW vista_estudiantes_activos AS
+SELECT p.id, p.nif, p.nombre, p.apellido1, p.apellido2, p.fecha_nacimiento, p.sexo, a.id AS id_alumno
+FROM persona p
+JOIN alumno a ON p.id = a.id_persona;
+```
+
+2. Vista de Profesores por Departamento:
+
+```sql
+CREATE VIEW vista_profesores_departamento AS
+SELECT p.id, p.nif, p.nombre, p.apellido1, p.apellido2, p.fecha_nacimiento, p.sexo, d.nombre AS nombre_departamento, prof.id AS id_profesor
+FROM persona p
+JOIN profesor prof ON p.id = prof.id_persona
+JOIN departamento d ON prof.id_departamento = d.id;
+```
+
+3. Vista de Cursos por Profesor:
+
+```sql
+CREATE VIEW vista_cursos_profesor AS
+SELECT a.nombre AS nombre_asignatura, a.creditos, a.tipo, a.curso, a.cuatrimestre, p.id, p.nif, p.nombre AS nombre_profesor, p.apellido1, p.apellido2, ap.id_asignatura AS id_asignatura_profesor
+FROM asignatura a
+JOIN asignatura_profesor ap ON a.id = ap.id_asignatura
+JOIN profesor p ON p.id = ap.id_profesor;
+```
+
+4. Vista de Cursos por Grado:
+
+```sql
+CREATE VIEW vista_cursos_grado AS
+SELECT a.nombre AS nombre_asignatura, a.creditos, a.tipo, a.curso,  a.cuatrimestre, g.nombre AS nombre_grado, ag.id_asignatura AS id_asignatura_grado
+FROM asignatura a
+JOIN asignatura_grado ag ON a.id = ag.id_asignatura
+JOIN grado g ON g.id = ag.id_grado;
+```
+
+5. Vista de Estudiantes Matriculados por Curso Escolar:
+
+```sql
+CREATE VIEW vista_estudiantes_matriculados_curso_escolar AS
+SELECT a.id, a.nif, a.nombre, a.apellido1, a.apellido2, c.anyo_inicio,  c.anyo_fin, asma.id_alumno AS id_alumno_matriculado
+FROM persona a
+JOIN alumno al ON a.id = al.id_persona
+JOIN alumno_se_matricula_asignatura asma ON al.id = asma.id_alumno
+JOIN curso_escolar c ON c.id = asma.id_curso_escolar;
+```
+
+6. Vista de Matrículas por Curso y Asignatura:
+
+```sql
+CREATE VIEW vista_matriculas_curso_asignatura AS
+SELECT a.nombre AS nombre_asignatura, a.curso, a.cuatrimestre, c.anyo_inicio,  c.anyo_fin, COUNT(DISTINCT asma.id_alumno) AS numero_matriculas
+FROM asignatura a
+JOIN asignatura_profesor ap ON a.id = ap.id_asignatura
+JOIN alumno_se_matricula_asignatura asma ON a.id = asma.id_asignatura
+JOIN curso_escolar c ON c.id = asma.id_curso_escolar
+GROUP BY a.nombre, a.curso, a.cuatrimestre, c.anyo_inicio, c.anyo_fin;
+```
+
+7. Vista de Profesores con Más Matrículas:
+
+```sql
+CREATE VIEW vista_profesores_mas_matriculas AS
+SELECT p.id, p.nif, p.nombre, p.apellido1, p.apellido2, COUNT(DISTINCT asma.id_alumno) AS numero_matriculas_total
+FROM persona p
+JOIN profesor prof ON p.id = prof
+```
+
+8. Vista para obtener la información de contacto de un estudiante:
+
+```sql
+CREATE VIEW vista_informacion_contacto_estudiante AS
+SELECT p.id AS id_persona, p.nif, p.nombre, p.apellido1, p.apellido2, d.calle, d.ciudad, d.codigo_postal, t.numero AS numero_telefono
+FROM persona p
+JOIN alumno al ON p.id = al.id_persona
+JOIN persona_direccion pd ON p.id = pd.id_persona
+JOIN direccion d ON d.id = pd.id_direccion
+JOIN persona_telefono pt ON p.id = pt.id_persona
+JOIN telefono t ON t.id = pt.id_telefono;
+```
+
+9. Vista de Cursos:
+
+```sql
+CREATE VIEW vista_cursos_simple AS
+SELECT a.id, a.nombre, a.creditos, a.tipo, a.curso, a.cuatrimestre
+FROM asignatura a;
+```
+
+10. Vista de Profesores: 
+
+```sql
+CREATE VIEW vista_profesores_simple AS 
+SELECT p.id AS id_persona, p.nif, p.nombre, p.apellido1, p.apellido2, prof.id AS id_profesor 
+FROM persona p 
+JOIN profesor prof ON p.id = prof.id_persona;
+```
+
+## Procedimientos 
+1. Insertar una nueva dirección:
+```sql
+DELIMITER //
+
+CREATE PROCEDURE insertar_direccion(
+    IN calle VARCHAR(50),
+    IN ciudad VARCHAR(25),
+    IN codigo_postal VARCHAR(10)
+)
+BEGIN
+    INSERT INTO direccion (calle, ciudad, codigo_postal) VALUES (calle, ciudad, codigo_postal);
+END //
+
+DELIMITER ;
+```
+
+2. Insertar un nuevo teléfono:
+```sql
+DELIMITER //
+
+CREATE PROCEDURE insertar_telefono(
+    IN numero VARCHAR(9)
+)
+BEGIN
+    INSERT INTO telefono (numero) VALUES (numero);
+END //
+
+DELIMITER ;
+```
+
+3. Insertar una nueva persona:
+```sql
+DELIMITER //
+
+CREATE PROCEDURE insertar_persona(
+    IN nif VARCHAR(9),
+    IN nombre VARCHAR(25),
+    IN apellido1 VARCHAR(50),
+    IN apellido2 VARCHAR(50),
+    IN fecha_nacimiento DATE,
+    IN sexo ENUM('H', 'M')
+)
+BEGIN
+    INSERT INTO persona (nif, nombre, apellido1, apellido2, fecha_nacimiento, sexo) 
+    VALUES (nif, nombre, apellido1, apellido2, fecha_nacimiento, sexo);
+END //
+
+DELIMITER ;
+```
+
+4. Asignar un teléfono a una persona:
+```sql
+DELIMITER //
+
+CREATE PROCEDURE asignar_telefono_a_persona(
+    IN id_persona INT,
+    IN id_telefono INT
+)
+BEGIN
+    INSERT INTO persona_telefono (id_persona, id_telefono) VALUES (id_persona, id_telefono);
+END //
+
+DELIMITER ;
+```
+
+5. Asignar una dirección a una persona:
+```sql
+DELIMITER //
+
+CREATE PROCEDURE asignar_direccion_a_persona(
+    IN id_persona INT,
+    IN id_direccion INT
+)
+BEGIN
+    INSERT INTO persona_direccion (id_persona, id_direccion) VALUES (id_persona, id_direccion);
+END //
+
+DELIMITER ;
+```
+
+6. Insertar un nuevo departamento:
+```sql
+DELIMITER //
+
+CREATE PROCEDURE insertar_departamento(
+    IN nombre VARCHAR(50)
+)
+BEGIN
+    INSERT INTO departamento (nombre) VALUES (nombre);
+END //
+
+DELIMITER ;
+```
+
+7. Insertar un nuevo profesor:
+```sql
+DELIMITER //
+
+CREATE PROCEDURE insertar_profesor(
+    IN id_persona INT,
+    IN id_departamento INT
+)
+BEGIN
+    INSERT INTO profesor (id_persona, id_departamento) VALUES (id_persona, id_departamento);
+END //
+
+DELIMITER ;
+```
+
+8. Insertar un nuevo alumno:
+```sql
+DELIMITER //
+
+CREATE PROCEDURE insertar_alumno(
+    IN id_persona INT
+)
+BEGIN
+    INSERT INTO alumno (id_persona) VALUES (id_persona);
+END //
+
+DELIMITER ;
+```
+
+9. Insertar una nueva asignatura:
+```sql
+DELIMITER //
+
+CREATE PROCEDURE insertar_asignatura(
+    IN nombre VARCHAR(100),
+    IN creditos FLOAT,
+    IN tipo VARCHAR(100),
+    IN curso TINYINT,
+    IN cuatrimestre TINYINT
+)
+BEGIN
+    INSERT INTO asignatura (nombre, creditos, tipo, curso, cuatrimestre) 
+    VALUES (nombre, creditos, tipo, curso, cuatrimestre);
+END //
+
+DELIMITER ;
+```
+
+10. Matricular un alumno en una asignatura para un curso escolar:
+```sql
+DELIMITER //
+
+CREATE PROCEDURE matricular_alumno_en_asignatura(
+    IN id_alumno INT,
+    IN id_asignatura INT,
+    IN id_curso_escolar INT
+)
+BEGIN
+    INSERT INTO alumno_se_matricula_asignatura (id_alumno, id_asignatura, id_curso_escolar) 
+    VALUES (id_alumno, id_asignatura, id_curso_escolar);
+END //
+
+DELIMITER ;
+```
+
