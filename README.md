@@ -1,5 +1,7 @@
 # Universidad
 
+![db][universidad.png]
+
 ###     Consultas sobre una tabla
 
 1. Devuelve un listado con el primer apellido, segundo apellido y el nombre de
